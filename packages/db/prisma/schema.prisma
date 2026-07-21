@@ -50,6 +50,11 @@ model Location {
   features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false}")
   memberships Membership[]
   costEvents  CostEvent[]
+  contacts        Contact[]
+  customFieldDefs CustomFieldDef[]
+  pipelines       Pipeline[]
+  pipelineStages  PipelineStage[]
+  opportunities   Opportunity[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -103,6 +108,112 @@ model CostEvent {
   @@unique([provider, providerRef, type])
   @@index([locationId, occurredAt])
   @@map("cost_events")
+}
+
+// The hub entity everything hangs off. Identity within a location resolves on
+// email first, then phone (upsert semantics in ContactsService) — one person,
+// one contact, however they arrive.
+model Contact {
+  id            String        @id @default(uuid()) @db.Uuid
+  location      Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId    String        @db.Uuid
+  firstName     String?
+  lastName      String?
+  email         String?
+  phone         String? // E.164
+  source        String?
+  timezone      String?
+  dndSms        Boolean       @default(false)
+  dndEmail      Boolean       @default(false)
+  tags          String[]      @default([])
+  customFields  Json          @default("{}")
+  opportunities Opportunity[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@unique([locationId, email])
+  @@unique([locationId, phone])
+  @@index([locationId, createdAt])
+  @@map("contacts")
+}
+
+// Per-tenant schema for Contact.customFields — tenants define their own
+// fields; writes are validated against these definitions.
+model CustomFieldDef {
+  id         String          @id @default(uuid()) @db.Uuid
+  location   Location        @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String          @db.Uuid
+  key        String // snake_case identifier used in Contact.customFields
+  label      String
+  type       CustomFieldType
+  options    String[]        @default([]) // for SELECT
+  createdAt  DateTime        @default(now())
+
+  @@unique([locationId, key])
+  @@map("custom_field_defs")
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  BOOLEAN
+  SELECT
+}
+
+model Pipeline {
+  id            String          @id @default(uuid()) @db.Uuid
+  location      Location        @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId    String          @db.Uuid
+  name          String
+  stages        PipelineStage[]
+  opportunities Opportunity[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@unique([locationId, name])
+  @@map("pipelines")
+}
+
+model PipelineStage {
+  id            String        @id @default(uuid()) @db.Uuid
+  location      Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId    String        @db.Uuid
+  pipeline      Pipeline      @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  pipelineId    String        @db.Uuid
+  name          String
+  position      Int
+  opportunities Opportunity[]
+
+  @@index([pipelineId, position])
+  @@map("pipeline_stages")
+}
+
+model Opportunity {
+  id            String            @id @default(uuid()) @db.Uuid
+  location      Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId    String            @db.Uuid
+  pipeline      Pipeline          @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  pipelineId    String            @db.Uuid
+  stage         PipelineStage     @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  stageId       String            @db.Uuid
+  contact       Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId     String            @db.Uuid
+  name          String
+  monetaryValue Decimal           @default(0) @db.Decimal(12, 2)
+  status        OpportunityStatus @default(OPEN)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([locationId, pipelineId, stageId])
+  @@map("opportunities")
+}
+
+enum OpportunityStatus {
+  OPEN
+  WON
+  LOST
+  ABANDONED
 }
 
 enum CostType {

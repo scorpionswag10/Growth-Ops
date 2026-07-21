@@ -9,9 +9,26 @@
 -- appointments, workflow_executions, social_posts, ...) MUST be added here in
 -- the same change that creates it.
 
-ALTER TABLE "cost_events" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "cost_events" FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS tenant_isolation ON "cost_events";
-CREATE POLICY tenant_isolation ON "cost_events"
-  USING ("locationId" = current_setting('app.location_id', true)::uuid)
-  WITH CHECK ("locationId" = current_setting('app.location_id', true)::uuid);
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'cost_events',
+    'contacts',
+    'custom_field_defs',
+    'pipelines',
+    'pipeline_stages',
+    'opportunities'
+  ] LOOP
+    EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
+    EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
+    EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', t);
+    EXECUTE format(
+      'CREATE POLICY tenant_isolation ON %I
+         USING ("locationId" = current_setting(''app.location_id'', true)::uuid)
+         WITH CHECK ("locationId" = current_setting(''app.location_id'', true)::uuid)',
+      t
+    );
+  END LOOP;
+END $$;
