@@ -16,6 +16,7 @@ export type LocationRow = {
   timezone: string;
   features: Record<string, boolean>;
   webhookToken: string;
+  reportToken: string;
 };
 
 type Me = { sub: string; email: string; isPlatformAdmin: boolean };

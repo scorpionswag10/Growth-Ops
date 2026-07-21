@@ -1,11 +1,13 @@
 {
-  "/login/page": "/login",
-  "/book/[locationId]/[slug]/page": "/book/[locationId]/[slug]",
-  "/page": "/",
-  "/(dash)/contacts/page": "/contacts",
-  "/(dash)/inbox/page": "/inbox",
-  "/(dash)/pipeline/page": "/pipeline",
-  "/(dash)/settings/page": "/settings",
   "/_not-found/page": "/_not-found",
-  "/(dash)/calendar/page": "/calendar"
+  "/login/page": "/login",
+  "/report/[locationId]/[token]/page": "/report/[locationId]/[token]",
+  "/page": "/",
+  "/book/[locationId]/[slug]/page": "/book/[locationId]/[slug]",
+  "/(dash)/contacts/page": "/contacts",
+  "/(dash)/calendar/page": "/calendar",
+  "/(dash)/inbox/page": "/inbox",
+  "/(dash)/reports/page": "/reports",
+  "/(dash)/settings/page": "/settings",
+  "/(dash)/pipeline/page": "/pipeline"
 }

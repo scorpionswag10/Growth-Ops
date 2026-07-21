@@ -27,6 +27,15 @@
         "nxtPslug": "nxtPslug"
       },
       "namedRegex": "^/book/(?<nxtPlocationId>[^/]+?)/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/report/[locationId]/[token]",
+      "regex": "^/report/([^/]+?)/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPlocationId": "nxtPlocationId",
+        "nxtPtoken": "nxtPtoken"
+      },
+      "namedRegex": "^/report/(?<nxtPlocationId>[^/]+?)/(?<nxtPtoken>[^/]+?)(?:/)?$"
     }
   ],
   "staticRoutes": [
@@ -71,6 +80,12 @@
       "regex": "^/pipeline(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/pipeline(?:/)?$"
+    },
+    {
+      "page": "/reports",
+      "regex": "^/reports(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/reports(?:/)?$"
     },
     {
       "page": "/settings",

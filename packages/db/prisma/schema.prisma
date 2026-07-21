@@ -51,6 +51,8 @@ model Location {
   // Secret path segment for this location's public lead-capture webhook
   // (LeadPages form integrations POST here). Rotatable by regenerating.
   webhookToken String        @unique @default(uuid()) @db.Uuid
+  // Secret path segment for the client-facing live growth report.
+  reportToken  String        @unique @default(uuid()) @db.Uuid
   memberships Membership[]
   costEvents  CostEvent[]
   contacts        Contact[]
