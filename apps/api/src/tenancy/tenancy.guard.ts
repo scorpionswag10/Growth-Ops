@@ -53,3 +53,11 @@ export const CurrentLocation = createParamDecorator(
   (_: unknown, ctx: ExecutionContext): Location =>
     ctx.switchToHttp().getRequest().location,
 );
+
+// undefined for platform admins (they bypass membership entirely) — callers
+// treat "platform admin" and "OWNER/ADMIN role" as separate, either-suffices
+// checks, never assume this is set.
+export const CurrentMembershipRole = createParamDecorator(
+  (_: unknown, ctx: ExecutionContext): string | undefined =>
+    ctx.switchToHttp().getRequest().membershipRole,
+);

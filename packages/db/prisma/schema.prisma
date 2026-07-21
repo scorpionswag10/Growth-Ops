@@ -18,10 +18,55 @@ model User {
   isPlatformAdmin Boolean      @default(false)
   memberships     Membership[]
   refreshTokens   RefreshToken[]
+  invitesSent     Invite[]           @relation("InvitedBy")
+  pushSubscriptions PushSubscription[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
   @@map("users")
+}
+
+// A browser's Web Push registration for one user. Platform-layer, not
+// tenant-scoped — alerts fan out per-user across every location they're a
+// member of. No email/SMS provider required: Web Push works standalone.
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+// A pending team invite for one location. No email dispatcher exists yet, so
+// the flow is a shareable link, not an email send: an admin generates it,
+// copies it, and sends it however they currently reach that person.
+model Invite {
+  id              String       @id @default(uuid()) @db.Uuid
+  location        Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId      String       @db.Uuid
+  email           String
+  role            MemberRole   @default(STAFF)
+  token           String       @unique @default(uuid())
+  status          InviteStatus @default(PENDING)
+  invitedBy       User         @relation("InvitedBy", fields: [invitedByUserId], references: [id])
+  invitedByUserId String       @db.Uuid
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdAt       DateTime     @default(now())
+
+  @@index([locationId, status])
+  @@map("invites")
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
 }
 
 model RefreshToken {
@@ -57,6 +102,7 @@ model Location {
   // Secret path segment for the client-facing live growth report.
   reportToken  String        @unique @default(uuid()) @db.Uuid
   memberships Membership[]
+  invites     Invite[]
   costEvents  CostEvent[]
   contacts        Contact[]
   customFieldDefs CustomFieldDef[]

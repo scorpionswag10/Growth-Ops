@@ -14,6 +14,8 @@ import { ReportModule } from "./report/report.module";
 import { WorkflowsModule } from "./workflows/workflows.module";
 import { SocialModule } from "./social/social.module";
 import { AiModule } from "./ai/ai.module";
+import { InvitesModule } from "./invites/invites.module";
+import { PushModule } from "./push/push.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -33,6 +35,8 @@ import { HealthController } from "./health/health.controller";
     WorkflowsModule,
     SocialModule,
     AiModule,
+    InvitesModule,
+    PushModule,
   ],
   controllers: [HealthController],
 })

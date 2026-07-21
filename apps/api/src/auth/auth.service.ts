@@ -43,7 +43,7 @@ export class AuthService {
         isPlatformAdmin: userCount === 0,
       },
     });
-    return this.issueTokens(user.id, user.email, user.isPlatformAdmin);
+    return this.issueTokensFor(user.id, user.email, user.isPlatformAdmin);
   }
 
   async login(dto: LoginDto) {
@@ -53,7 +53,7 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException("Invalid credentials");
     }
-    return this.issueTokens(user.id, user.email, user.isPlatformAdmin);
+    return this.issueTokensFor(user.id, user.email, user.isPlatformAdmin);
   }
 
   async refresh(refreshToken: string) {
@@ -70,10 +70,10 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
     const { user } = record;
-    return this.issueTokens(user.id, user.email, user.isPlatformAdmin);
+    return this.issueTokensFor(user.id, user.email, user.isPlatformAdmin);
   }
 
-  private async issueTokens(
+  async issueTokensFor(
     userId: string,
     email: string,
     isPlatformAdmin: boolean,
