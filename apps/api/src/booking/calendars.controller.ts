@@ -19,6 +19,7 @@ import {
   Min,
   MinLength,
 } from "class-validator";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Location } from "@growthops/db";
 import { JwtAuthGuard } from "../auth/guards";
 import { CurrentLocation, TenancyGuard } from "../tenancy/tenancy.guard";
@@ -80,7 +81,10 @@ class UpdateAppointmentDto {
 @Controller("locations/:locationId")
 @UseGuards(JwtAuthGuard, TenancyGuard)
 export class CalendarsController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: EventEmitter2,
+  ) {}
 
   @Post("calendars")
   create(@CurrentLocation() loc: Location, @Body() dto: CreateCalendarDto) {
@@ -141,16 +145,30 @@ export class CalendarsController {
   }
 
   @Patch("appointments/:appointmentId")
-  updateAppointment(
+  async updateAppointment(
     @CurrentLocation() loc: Location,
     @Param("appointmentId") appointmentId: string,
     @Body() dto: UpdateAppointmentDto,
   ) {
-    return this.prisma.withLocation(loc.id, (tx) =>
+    const appointment = await this.prisma.withLocation(loc.id, (tx) =>
       tx.appointment.update({
         where: { id: appointmentId },
         data: { status: dto.status },
       }),
     );
+    const eventByStatus: Record<string, string> = {
+      NO_SHOW: "appointment.no_show",
+      CANCELLED: "appointment.cancelled",
+      COMPLETED: "appointment.completed",
+    };
+    const event = eventByStatus[dto.status];
+    if (event) {
+      this.events.emit(event, {
+        locationId: loc.id,
+        contactId: appointment.contactId,
+        appointmentStartsAt: appointment.startsAt.toISOString(),
+      });
+    }
+    return appointment;
   }
 }

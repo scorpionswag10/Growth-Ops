@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { Calendar, Location, Prisma } from "@growthops/db";
 import { PrismaService } from "../prisma/prisma.service";
 import { ContactsService } from "../contacts/contacts.service";
@@ -19,6 +20,7 @@ export class BookingService {
   constructor(
     private prisma: PrismaService,
     private contacts: ContactsService,
+    private events: EventEmitter2,
   ) {}
 
   async resolvePublicCalendar(locationId: string, slug: string) {
@@ -164,6 +166,11 @@ export class BookingService {
           },
         }),
       );
+      this.events.emit("appointment.booked", {
+        locationId: location.id,
+        contactId: contact.id,
+        appointmentStartsAt: appointment.startsAt.toISOString(),
+      });
       return { appointment, contact };
     } catch (err) {
       // The DB exclusion constraint is the final word on races: two

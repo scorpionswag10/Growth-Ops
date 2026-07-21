@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CustomFieldDef, Prisma } from "@growthops/db";
 import { PrismaService } from "../prisma/prisma.service";
 import { UpsertContactDto } from "./dto";
@@ -17,7 +18,10 @@ export function normalizePhone(raw: string): string {
 
 @Injectable()
 export class ContactsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: EventEmitter2,
+  ) {}
 
   /**
    * Upsert by identity: email match wins, then phone match, else create.
@@ -27,7 +31,7 @@ export class ContactsService {
     const email = dto.email?.toLowerCase();
     const phone = dto.phone ? normalizePhone(dto.phone) : undefined;
 
-    return this.prisma.withLocation(locationId, async (tx) => {
+    const result = await this.prisma.withLocation(locationId, async (tx) => {
       if (dto.customFields) {
         await this.validateCustomFields(tx, dto.customFields);
       }
@@ -54,7 +58,7 @@ export class ContactsService {
       };
 
       if (existing) {
-        return tx.contact.update({
+        const updated = await tx.contact.update({
           where: { id: existing.id },
           data: {
             ...data,
@@ -69,15 +73,25 @@ export class ContactsService {
               : undefined,
           },
         });
+        return { contact: updated, created: false };
       }
-      return tx.contact.create({
+      const createdContact = await tx.contact.create({
         data: {
           ...data,
           locationId,
           customFields: (dto.customFields ?? {}) as Prisma.InputJsonValue,
         },
       });
+      return { contact: createdContact, created: true };
     });
+
+    if (result.created) {
+      this.events.emit("contact.created", {
+        locationId,
+        contactId: result.contact.id,
+      });
+    }
+    return result.contact;
   }
 
   async list(

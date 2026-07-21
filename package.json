@@ -14,6 +14,8 @@
     "infra:down": "docker compose down",
     "pg:start": "infra/pg16/bin/pg_ctl -D infra/.pgdata -o \"-p 5433 -c listen_addresses=localhost\" -l infra/.pgdata/server.log start",
     "pg:stop": "infra/pg16/bin/pg_ctl -D infra/.pgdata stop",
+    "redis:start": "mkdir -p infra/.redisdata && infra/redis-src/src/redis-server --port 6380 --bind 127.0.0.1 --daemonize yes --dir infra/.redisdata --appendonly yes",
+    "redis:stop": "infra/redis-src/src/redis-cli -p 6380 shutdown nosave || true",
     "db:push": "pnpm --filter @growthops/db db:push",
     "db:rls": "pnpm --filter @growthops/db db:rls",
     "db:generate": "pnpm --filter @growthops/db generate"

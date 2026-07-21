@@ -5,3 +5,5 @@ dist/
 .DS_Store
 infra/pg16/
 infra/.pgdata/
+infra/redis-src/
+infra/.redisdata/

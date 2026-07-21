@@ -23,7 +23,9 @@ BEGIN
     'conversations',
     'messages',
     'calendars',
-    'appointments'
+    'appointments',
+    'workflows',
+    'workflow_executions'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);

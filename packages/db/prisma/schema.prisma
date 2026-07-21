@@ -64,6 +64,8 @@ model Location {
   messages        Message[]
   calendars       Calendar[]
   appointments    Appointment[]
+  workflows       Workflow[]
+  workflowExecutions WorkflowExecution[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -140,6 +142,7 @@ model Contact {
   conversations Conversation[]
   messages      Message[]
   appointments  Appointment[]
+  workflowExecutions WorkflowExecution[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -350,6 +353,75 @@ enum AppointmentStatus {
   CANCELLED
   NO_SHOW
   COMPLETED
+}
+
+// A per-location automation. Definitions are JSON step lists (see
+// workflows/templates.ts for the shapes); the template catalog stamps proven
+// automations into any location — nothing is client-specific.
+model Workflow {
+  id          String              @id @default(uuid()) @db.Uuid
+  location    Location            @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId  String              @db.Uuid
+  name        String
+  trigger     WorkflowTrigger
+  // trigger refinement (e.g. {"offsetHours": -24} for reminders)
+  triggerConfig Json              @default("{}")
+  steps       Json // ordered step list
+  stopOnReply Boolean             @default(true)
+  status      WorkflowStatus      @default(PAUSED)
+  version     Int                 @default(1)
+  executions  WorkflowExecution[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([locationId, trigger, status])
+  @@map("workflows")
+}
+
+enum WorkflowTrigger {
+  CONTACT_CREATED
+  APPOINTMENT_BOOKED
+  APPOINTMENT_NO_SHOW
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_COMPLETED
+  MANUAL
+}
+
+enum WorkflowStatus {
+  ACTIVE
+  PAUSED
+}
+
+// A durable, resumable run of one workflow for one contact. The step list is
+// snapshotted at enrollment — editing a workflow never mutates in-flight runs.
+model WorkflowExecution {
+  id          String          @id @default(uuid()) @db.Uuid
+  location    Location        @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId  String          @db.Uuid
+  workflow    Workflow        @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  workflowId  String          @db.Uuid
+  contact     Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String          @db.Uuid
+  stepsSnapshot Json // pinned definition
+  stopOnReply Boolean         @default(true)
+  currentStep Int             @default(0)
+  context     Json            @default("{}")
+  status      ExecutionStatus @default(RUNNING)
+  resumeAt    DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([locationId, status])
+  @@index([contactId, status])
+  @@map("workflow_executions")
+}
+
+enum ExecutionStatus {
+  RUNNING
+  WAITING
+  COMPLETED
+  CANCELLED
+  FAILED
 }
 
 enum CostType {

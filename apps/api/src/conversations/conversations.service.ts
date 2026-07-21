@@ -11,6 +11,7 @@ import {
   MessageDirection,
   Prisma,
 } from "@growthops/db";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 import { PrismaService } from "../prisma/prisma.service";
 import { DispatcherRegistry } from "./dispatcher";
 
@@ -30,6 +31,7 @@ export class ConversationsService {
   constructor(
     private prisma: PrismaService,
     private dispatchers: DispatcherRegistry,
+    private events: EventEmitter2,
   ) {}
 
   /** The inbox: conversations newest-activity-first with contact summaries. */
@@ -114,7 +116,7 @@ export class ConversationsService {
     contactId: string,
     channel: MessageChannel,
     body: string,
-    sentByUserId: string,
+    sentByUserId?: string,
   ) {
     const flag = CHANNEL_FEATURE[channel];
     if (flag) {
@@ -239,6 +241,11 @@ export class ConversationsService {
         msg,
         params.direction === "INBOUND",
       );
+      return msg;
+    }).then((msg) => {
+      if (params.direction === "INBOUND") {
+        this.events.emit("message.inbound", { locationId, contactId });
+      }
       return msg;
     });
   }
