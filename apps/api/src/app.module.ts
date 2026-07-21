@@ -7,6 +7,7 @@ import { CostEventsModule } from "./cost-events/cost-events.module";
 import { ContactsModule } from "./contacts/contacts.module";
 import { PipelinesModule } from "./pipelines/pipelines.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
+import { ConversationsModule } from "./conversations/conversations.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -19,6 +20,7 @@ import { HealthController } from "./health/health.controller";
     ContactsModule,
     PipelinesModule,
     WebhooksModule,
+    ConversationsModule,
   ],
   controllers: [HealthController],
 })

@@ -19,7 +19,9 @@ BEGIN
     'custom_field_defs',
     'pipelines',
     'pipeline_stages',
-    'opportunities'
+    'opportunities',
+    'conversations',
+    'messages'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);

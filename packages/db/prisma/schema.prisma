@@ -58,6 +58,8 @@ model Location {
   pipelines       Pipeline[]
   pipelineStages  PipelineStage[]
   opportunities   Opportunity[]
+  conversations   Conversation[]
+  messages        Message[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -131,6 +133,8 @@ model Contact {
   tags          String[]      @default([])
   customFields  Json          @default("{}")
   opportunities Opportunity[]
+  conversations Conversation[]
+  messages      Message[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -217,6 +221,79 @@ enum OpportunityStatus {
   WON
   LOST
   ABANDONED
+}
+
+// One thread per contact per location, across every channel. The unified
+// inbox is a list of these ordered by lastMessageAt.
+model Conversation {
+  id                 String    @id @default(uuid()) @db.Uuid
+  location           Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId         String    @db.Uuid
+  contact            Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId          String    @db.Uuid
+  lastMessageAt      DateTime?
+  lastMessagePreview String?
+  unreadCount        Int       @default(0)
+  messages           Message[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([locationId, contactId])
+  @@index([locationId, lastMessageAt])
+  @@map("conversations")
+}
+
+// The normalized message envelope — every channel (SMS, email, DMs, calls,
+// internal notes) flattens into this one shape. Getting this right is what
+// makes each new channel an adapter instead of a rewrite.
+model Message {
+  id                String           @id @default(uuid()) @db.Uuid
+  location          Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId        String           @db.Uuid
+  conversation      Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId    String           @db.Uuid
+  contact           Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId         String           @db.Uuid
+  channel           MessageChannel
+  direction         MessageDirection
+  status            MessageStatus
+  body              String
+  attachments       Json             @default("[]")
+  providerMessageId String? // Twilio SID, provider MID — idempotency key for webhook ingestion
+  providerMeta      Json?
+  sentByUserId      String?          @db.Uuid // team member who sent an outbound message
+  occurredAt        DateTime         @default(now())
+  createdAt         DateTime         @default(now())
+
+  @@unique([channel, providerMessageId])
+  @@index([conversationId, occurredAt])
+  @@index([locationId, occurredAt])
+  @@map("messages")
+}
+
+enum MessageChannel {
+  SMS
+  EMAIL
+  FB
+  IG
+  LIVECHAT
+  CALL
+  VOICEMAIL
+  NOTE
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  RECEIVED
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
 }
 
 enum CostType {
