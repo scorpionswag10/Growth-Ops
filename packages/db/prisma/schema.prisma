@@ -48,6 +48,9 @@ model Location {
   // GrowthOps is ready to offer them (e.g. sms stays false until A2P 10DLC
   // registration for this tenant is approved).
   features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false}")
+  // Secret path segment for this location's public lead-capture webhook
+  // (LeadPages form integrations POST here). Rotatable by regenerating.
+  webhookToken String        @unique @default(uuid()) @db.Uuid
   memberships Membership[]
   costEvents  CostEvent[]
   contacts        Contact[]
