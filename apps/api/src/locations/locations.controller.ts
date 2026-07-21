@@ -117,6 +117,22 @@ export class LocationsController {
     });
   }
 
+  @Patch(":locationId/ai-profile")
+  @UseGuards(TenancyGuard)
+  async updateAiProfile(
+    @Param("locationId") locationId: string,
+    @Body() body: { profile?: string },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException("Only platform admins edit the AI profile");
+    }
+    return this.prisma.location.update({
+      where: { id: locationId },
+      data: { aiProfile: body.profile ?? null },
+    });
+  }
+
   // Proof of the "built but not offered" gate: this route exists, but returns
   // 403 for every location until its features.sms flag is flipped to true.
   @Get(":locationId/sms/status")

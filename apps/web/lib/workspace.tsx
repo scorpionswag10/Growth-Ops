@@ -17,6 +17,7 @@ export type LocationRow = {
   features: Record<string, boolean>;
   webhookToken: string;
   reportToken: string;
+  aiProfile: string | null;
 };
 
 type Me = { sub: string; email: string; isPlatformAdmin: boolean };

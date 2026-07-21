@@ -7,3 +7,4 @@ infra/pg16/
 infra/.pgdata/
 infra/redis-src/
 infra/.redisdata/
+apps/web/.next/

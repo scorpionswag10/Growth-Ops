@@ -8,5 +8,6 @@ import { ContactsModule } from "../contacts/contacts.module";
   imports: [ContactsModule],
   controllers: [BookingPublicController, CalendarsController],
   providers: [BookingService],
+  exports: [BookingService],
 })
 export class BookingModule {}

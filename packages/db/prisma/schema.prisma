@@ -47,7 +47,10 @@ model Location {
   // Entitlement flags: features exist in code but are OFF per tenant until
   // GrowthOps is ready to offer them (e.g. sms stays false until A2P 10DLC
   // registration for this tenant is approved).
-  features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false}")
+  features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false, \"ai\": false}")
+  // Business knowledge for the AI receptionist: services, prices, hours,
+  // policies, FAQs — written per client, injected into the system prompt.
+  aiProfile   String?
   // Secret path segment for this location's public lead-capture webhook
   // (LeadPages form integrations POST here). Rotatable by regenerating.
   webhookToken String        @unique @default(uuid()) @db.Uuid
@@ -66,6 +69,7 @@ model Location {
   appointments    Appointment[]
   workflows       Workflow[]
   workflowExecutions WorkflowExecution[]
+  socialPosts     SocialPost[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -421,6 +425,36 @@ enum ExecutionStatus {
   WAITING
   COMPLETED
   CANCELLED
+  FAILED
+}
+
+// A scheduled social media post. Publishing goes through the
+// SocialPublisherRegistry — dark (fails loud) until a provider (Ayrshare or
+// direct platform APIs) is configured. This replaces GHL's website builder
+// in our lineup: content calendar as an operating feature.
+model SocialPost {
+  id          String           @id @default(uuid()) @db.Uuid
+  location    Location         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId  String           @db.Uuid
+  content     String
+  platforms   String[] // facebook | instagram | gbp | tiktok
+  mediaUrls   String[]         @default([])
+  scheduledAt DateTime?
+  status      SocialPostStatus @default(DRAFT)
+  providerRef String?
+  error       String?
+  publishedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([locationId, scheduledAt])
+  @@map("social_posts")
+}
+
+enum SocialPostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
   FAILED
 }
 

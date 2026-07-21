@@ -12,6 +12,7 @@ const FEATURES: { key: string; label: string; note: string }[] = [
   { key: "email", label: "Email sending", note: "Off while ActiveCampaign handles nurture" },
   { key: "social", label: "Social publishing", note: "Arrives with the social media module" },
   { key: "workflows", label: "Automations", note: "Arrives with the workflow engine" },
+  { key: "ai", label: "AI receptionist", note: "Auto-replies to inbound messages and books appointments; needs an Anthropic API key on the server" },
 ];
 
 export default function SettingsPage() {
@@ -19,6 +20,24 @@ export default function SettingsPage() {
   const loc = location as LocationRow;
   const [error, setError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [profile, setProfile] = useState(loc.aiProfile ?? "");
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  async function saveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    try {
+      await api(`/locations/${loc.id}/ai-profile`, {
+        method: "PATCH",
+        body: { profile: profile || undefined },
+      });
+      await reloadLocations();
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed");
+    }
+  }
 
   const features = (loc.features ?? {}) as Record<string, boolean>;
 
@@ -76,6 +95,31 @@ export default function SettingsPage() {
           ))}
         </div>
         {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      </section>
+
+      <section className="mt-5 max-w-2xl rounded-xl bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold text-slate-900">AI receptionist — business profile</h2>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Everything the AI is allowed to know and say about this business:
+          services, prices, hours, policies, FAQs. It will not state anything
+          that is not written here.
+        </p>
+        <form onSubmit={saveProfile} className="mt-3">
+          <textarea
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            rows={6}
+            placeholder={"Example:\nServices: teeth whitening ($149), tooth gems (from $45)\nHours: Mon-Fri 9am-5pm\nAddress: ...\nPolicy: 24h notice to reschedule."}
+            value={profile}
+            onChange={(e) => setProfile(e.target.value)}
+            disabled={!me.isPlatformAdmin}
+          />
+          <button
+            disabled={!me.isPlatformAdmin}
+            className="mt-2 rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+          >
+            {profileSaved ? "Saved" : "Save profile"}
+          </button>
+        </form>
       </section>
 
       <section className="mt-5 max-w-2xl rounded-xl bg-white p-5 shadow-sm">
