@@ -60,6 +60,8 @@ model Location {
   opportunities   Opportunity[]
   conversations   Conversation[]
   messages        Message[]
+  calendars       Calendar[]
+  appointments    Appointment[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
@@ -135,6 +137,7 @@ model Contact {
   opportunities Opportunity[]
   conversations Conversation[]
   messages      Message[]
+  appointments  Appointment[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -294,6 +297,57 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+}
+
+// A bookable service/calendar. The public booking link is
+// /book/:locationId/:slug — embedded on the client's existing site.
+model Calendar {
+  id              String        @id @default(uuid()) @db.Uuid
+  location        Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId      String        @db.Uuid
+  name            String
+  slug            String
+  timezone        String? // falls back to location.timezone
+  slotDurationMin Int           @default(30)
+  bufferMin       Int           @default(0)
+  minNoticeMin    Int           @default(120)
+  maxAdvanceDays  Int           @default(30)
+  // {"mon":[["09:00","17:00"]], "tue":[...], ...} in the calendar's timezone
+  weeklyHours     Json
+  appointments    Appointment[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([locationId, slug])
+  @@map("calendars")
+}
+
+model Appointment {
+  id         String            @id @default(uuid()) @db.Uuid
+  location   Location          @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String            @db.Uuid
+  calendar   Calendar          @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  calendarId String            @db.Uuid
+  contact    Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String            @db.Uuid
+  startsAt   DateTime          @db.Timestamptz(3)
+  endsAt     DateTime          @db.Timestamptz(3)
+  status     AppointmentStatus @default(CONFIRMED)
+  notes      String?
+  source     String? // booking-page, manual, ...
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([locationId, startsAt])
+  @@index([calendarId, startsAt])
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
 }
 
 enum CostType {

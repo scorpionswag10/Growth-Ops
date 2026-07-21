@@ -1,8 +1,11 @@
 {
-  "/_not-found/page": "/_not-found",
+  "/login/page": "/login",
+  "/book/[locationId]/[slug]/page": "/book/[locationId]/[slug]",
   "/page": "/",
   "/(dash)/contacts/page": "/contacts",
-  "/(dash)/pipeline/page": "/pipeline",
   "/(dash)/inbox/page": "/inbox",
-  "/login/page": "/login"
+  "/(dash)/pipeline/page": "/pipeline",
+  "/(dash)/settings/page": "/settings",
+  "/_not-found/page": "/_not-found",
+  "/(dash)/calendar/page": "/calendar"
 }

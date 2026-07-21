@@ -10,6 +10,8 @@ const NAV = [
   { href: "/inbox", label: "Inbox" },
   { href: "/contacts", label: "Contacts" },
   { href: "/pipeline", label: "Pipeline" },
+  { href: "/calendar", label: "Calendar" },
+  { href: "/settings", label: "Settings" },
 ];
 
 function Shell({ children }: { children: React.ReactNode }) {

@@ -21,7 +21,9 @@ BEGIN
     'pipeline_stages',
     'opportunities',
     'conversations',
-    'messages'
+    'messages',
+    'calendars',
+    'appointments'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
@@ -34,3 +36,15 @@ BEGIN
     );
   END LOOP;
 END $$;
+
+-- Double-booking is impossible at the database level: two CONFIRMED
+-- appointments on the same calendar can never overlap, no matter what the
+-- application layer does. prisma db push may drop this; rerunning this file
+-- (pnpm db:rls) always restores it.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+ALTER TABLE "appointments" DROP CONSTRAINT IF EXISTS no_double_booking;
+ALTER TABLE "appointments" ADD CONSTRAINT no_double_booking
+  EXCLUDE USING gist (
+    "calendarId" WITH =,
+    tstzrange("startsAt", "endsAt") WITH &&
+  ) WHERE (status = 'CONFIRMED');

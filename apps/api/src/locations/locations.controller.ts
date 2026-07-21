@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from "@nestjs/common";
@@ -89,6 +90,31 @@ export class LocationsController {
   @UseGuards(TenancyGuard)
   costEventsList(@CurrentLocation() location: Location) {
     return this.costEvents.list(location.id);
+  }
+
+  // Flip per-location entitlement flags. This is how features go live for a
+  // tenant (booking today; sms/email/social when their providers are ready).
+  @Patch(":locationId/features")
+  @UseGuards(TenancyGuard)
+  async updateFeatures(
+    @Param("locationId") locationId: string,
+    @Body() body: Record<string, boolean>,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (!user.isPlatformAdmin) {
+      throw new ForbiddenException("Only platform admins change features");
+    }
+    const location = await this.prisma.location.findUnique({
+      where: { id: locationId },
+    });
+    const merged = {
+      ...((location?.features ?? {}) as Record<string, boolean>),
+      ...body,
+    };
+    return this.prisma.location.update({
+      where: { id: locationId },
+      data: { features: merged },
+    });
   }
 
   // Proof of the "built but not offered" gate: this route exists, but returns

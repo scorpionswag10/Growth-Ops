@@ -1,8 +1,11 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
+  "/login/page": "app/login/page.js",
+  "/book/[locationId]/[slug]/page": "app/book/[locationId]/[slug]/page.js",
   "/page": "app/page.js",
   "/(dash)/contacts/page": "app/(dash)/contacts/page.js",
-  "/(dash)/pipeline/page": "app/(dash)/pipeline/page.js",
   "/(dash)/inbox/page": "app/(dash)/inbox/page.js",
-  "/login/page": "app/login/page.js"
+  "/(dash)/pipeline/page": "app/(dash)/pipeline/page.js",
+  "/(dash)/settings/page": "app/(dash)/settings/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/(dash)/calendar/page": "app/(dash)/calendar/page.js"
 }

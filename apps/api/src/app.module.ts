@@ -8,6 +8,7 @@ import { ContactsModule } from "./contacts/contacts.module";
 import { PipelinesModule } from "./pipelines/pipelines.module";
 import { WebhooksModule } from "./webhooks/webhooks.module";
 import { ConversationsModule } from "./conversations/conversations.module";
+import { BookingModule } from "./booking/booking.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -21,6 +22,7 @@ import { HealthController } from "./health/health.controller";
     PipelinesModule,
     WebhooksModule,
     ConversationsModule,
+    BookingModule,
   ],
   controllers: [HealthController],
 })

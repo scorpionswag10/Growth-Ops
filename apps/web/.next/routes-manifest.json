@@ -18,7 +18,17 @@
     "afterFiles": [],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/book/[locationId]/[slug]",
+      "regex": "^/book/([^/]+?)/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPlocationId": "nxtPlocationId",
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/book/(?<nxtPlocationId>[^/]+?)/(?<nxtPslug>[^/]+?)(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",
@@ -31,6 +41,12 @@
       "regex": "^/_not\\-found(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/calendar",
+      "regex": "^/calendar(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/calendar(?:/)?$"
     },
     {
       "page": "/contacts",
@@ -55,6 +71,12 @@
       "regex": "^/pipeline(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/pipeline(?:/)?$"
+    },
+    {
+      "page": "/settings",
+      "regex": "^/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings(?:/)?$"
     }
   ],
   "dataRoutes": [],
