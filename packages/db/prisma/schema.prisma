@@ -137,6 +137,13 @@ model Contact {
   email         String?
   phone         String? // E.164
   source        String?
+  // First-known marketing attribution — captured at lead-capture or booking
+  // time from utm_* query params. Powers the funnel/conversion report.
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmContent    String?
+  utmTerm       String?
   timezone      String?
   dndSms        Boolean       @default(false)
   dndEmail      Boolean       @default(false)

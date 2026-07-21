@@ -33,6 +33,31 @@ class PublicBookDto {
   @IsString()
   @MaxLength(500)
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmSource?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmMedium?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmCampaign?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmContent?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  utmTerm?: string;
 }
 
 /** Public booking surface — no auth; gated per location by features.booking. */

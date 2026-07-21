@@ -123,6 +123,11 @@ export class BookingService {
       email?: string;
       phone?: string;
       notes?: string;
+      utmSource?: string;
+      utmMedium?: string;
+      utmCampaign?: string;
+      utmContent?: string;
+      utmTerm?: string;
     },
   ) {
     if (!params.email && !params.phone) {
@@ -147,6 +152,11 @@ export class BookingService {
       phone: params.phone,
       source: "booking-page",
       tags: ["booking"],
+      utmSource: params.utmSource,
+      utmMedium: params.utmMedium,
+      utmCampaign: params.utmCampaign,
+      utmContent: params.utmContent,
+      utmTerm: params.utmTerm,
     });
 
     const endsAt = new Date(

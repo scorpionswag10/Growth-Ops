@@ -17,6 +17,8 @@ export type GrowthReport = {
   revenue: { wonInPeriod: number; openPipeline: number };
   messages: { inbound: number; outbound: number };
   daily: { date: string; leads: number; appointments: number }[];
+  funnel: { stage: string; count: number }[];
+  funnelBySource: { source: string; leads: number; customers: number }[];
 };
 
 // Validated palette (dataviz reference instance, light mode, white surface).
@@ -24,6 +26,10 @@ const SERIES = { leads: "#2a78d6", appointments: "#eb6834" };
 const INK = { primary: "#0b0b0b", secondary: "#52514e", muted: "#898781" };
 const GRID = "#e1e0d9";
 const GOOD = "#006300";
+// Sequential blue ramp, steps 250/300/400/500/600 — ordinal use on a light
+// surface per the dataviz skill: the lightest step must clear 2:1 contrast,
+// so nothing lighter than step 250 (#86b6ef) appears here.
+const FUNNEL_RAMP = ["#86b6ef", "#6da7ec", "#3987e5", "#256abf", "#184f95"];
 
 function Delta({ current, previous }: { current: number; previous: number }) {
   if (previous === 0 && current === 0) return null;
@@ -270,6 +276,106 @@ export function SourceBreakdown({
   );
 }
 
+export function FunnelChart({ stages }: { stages: { stage: string; count: number }[] }) {
+  const max = Math.max(1, ...stages.map((s) => s.count));
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-sm">
+      <h3 className="text-sm font-semibold" style={{ color: INK.primary }}>
+        Customer journey funnel
+      </h3>
+      <div className="mt-3 space-y-2.5">
+        {stages.map((s, i) => {
+          const widthPct = Math.round((s.count / max) * 100);
+          const prevCount = i > 0 ? stages[i - 1].count : null;
+          const stepPct =
+            prevCount && prevCount > 0 ? Math.round((s.count / prevCount) * 100) : null;
+          return (
+            <div key={s.stage}>
+              <div className="flex items-baseline justify-between text-xs">
+                <span style={{ color: INK.secondary }}>{s.stage}</span>
+                <span className="font-semibold" style={{ color: INK.primary }}>
+                  {s.count}
+                  {stepPct !== null && (
+                    <span className="ml-1.5 font-normal" style={{ color: INK.muted }}>
+                      ({stepPct}% of {stages[i - 1].stage.toLowerCase()})
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="mt-1 h-3 rounded-full" style={{ background: "#f0efec" }}>
+                <div
+                  className="h-3 rounded-full"
+                  style={{
+                    width: `${widthPct}%`,
+                    background: FUNNEL_RAMP[i % FUNNEL_RAMP.length],
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function FunnelBySource({
+  rows,
+}: {
+  rows: { source: string; leads: number; customers: number }[];
+}) {
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-sm">
+      <h3 className="text-sm font-semibold" style={{ color: INK.primary }}>
+        Conversion by source
+      </h3>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead>
+            <tr style={{ color: INK.muted }}>
+              <th className="pb-1.5 font-medium">Source</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">Leads</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">Customers</th>
+              <th className="pb-1.5 pl-3 text-right font-medium">Conversion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => {
+              const rate = r.leads > 0 ? Math.round((r.customers / r.leads) * 100) : 0;
+              return (
+                <tr key={r.source} className="border-t" style={{ borderColor: GRID }}>
+                  <td className="py-1.5" style={{ color: INK.secondary }}>
+                    {r.source}
+                  </td>
+                  <td className="py-1.5 pl-3 text-right" style={{ color: INK.primary }}>
+                    {r.leads}
+                  </td>
+                  <td className="py-1.5 pl-3 text-right" style={{ color: INK.primary }}>
+                    {r.customers}
+                  </td>
+                  <td
+                    className="py-1.5 pl-3 text-right font-semibold"
+                    style={{ color: rate > 0 ? GOOD : INK.muted }}
+                  >
+                    {rate}%
+                  </td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-3 text-center" style={{ color: INK.muted }}>
+                  No leads in this period yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export function ReportBody({ report }: { report: GrowthReport }) {
   const r = report;
   return (
@@ -301,6 +407,10 @@ export function ReportBody({ report }: { report: GrowthReport }) {
         />
       </div>
       <LeadsChart daily={r.daily} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <FunnelChart stages={r.funnel} />
+        <FunnelBySource rows={r.funnelBySource} />
+      </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <SourceBreakdown bySource={r.leads.bySource} />
         <div className="rounded-xl bg-white p-4 shadow-sm">

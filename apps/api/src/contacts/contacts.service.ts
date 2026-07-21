@@ -71,12 +71,24 @@ export class ContactsService {
             tags: dto.tags
               ? Array.from(new Set([...existing.tags, ...dto.tags]))
               : undefined,
+            // First-touch attribution: keep the original utm values, never
+            // let a later touch overwrite where this contact actually came from.
+            utmSource: existing.utmSource ?? dto.utmSource,
+            utmMedium: existing.utmMedium ?? dto.utmMedium,
+            utmCampaign: existing.utmCampaign ?? dto.utmCampaign,
+            utmContent: existing.utmContent ?? dto.utmContent,
+            utmTerm: existing.utmTerm ?? dto.utmTerm,
           },
         });
         return { contact: updated, created: false };
       }
       const createdContact = await tx.contact.create({
         data: {
+          utmSource: dto.utmSource,
+          utmMedium: dto.utmMedium,
+          utmCampaign: dto.utmCampaign,
+          utmContent: dto.utmContent,
+          utmTerm: dto.utmTerm,
           ...data,
           locationId,
           customFields: (dto.customFields ?? {}) as Prisma.InputJsonValue,

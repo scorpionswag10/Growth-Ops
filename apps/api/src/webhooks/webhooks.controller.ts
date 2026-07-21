@@ -75,6 +75,11 @@ export class WebhooksController {
       phone,
       source: s(body.source) ?? "webhook",
       tags: Array.from(new Set(["new-lead", ...tags])),
+      utmSource: s(body.utm_source) ?? s(body.utmSource),
+      utmMedium: s(body.utm_medium) ?? s(body.utmMedium),
+      utmCampaign: s(body.utm_campaign) ?? s(body.utmCampaign),
+      utmContent: s(body.utm_content) ?? s(body.utmContent),
+      utmTerm: s(body.utm_term) ?? s(body.utmTerm),
     });
     return { ok: true, contactId: contact.id };
   }

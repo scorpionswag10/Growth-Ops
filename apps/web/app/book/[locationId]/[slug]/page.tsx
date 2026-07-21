@@ -35,6 +35,21 @@ export default function PublicBookingPage({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Captured once on load so a client-side nav (day/time picks) never loses
+  // the campaign that brought this visitor here.
+  const utm = useMemo(() => {
+    if (typeof window === "undefined") return {};
+    const p = new URLSearchParams(window.location.search);
+    const pick = (k: string) => p.get(k) || undefined;
+    return {
+      utmSource: pick("utm_source"),
+      utmMedium: pick("utm_medium"),
+      utmCampaign: pick("utm_campaign"),
+      utmContent: pick("utm_content"),
+      utmTerm: pick("utm_term"),
+    };
+  }, []);
+
   const loadSlots = useCallback(async () => {
     const from = new Date();
     const to = new Date(Date.now() + 13 * 86_400_000);
@@ -79,6 +94,7 @@ export default function PublicBookingPage({
           name: form.name,
           email: form.email || undefined,
           phone: form.phone || undefined,
+          ...utm,
         }),
       });
       const data = await res.json();

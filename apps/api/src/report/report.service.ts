@@ -18,6 +18,8 @@ export interface GrowthReport {
   revenue: { wonInPeriod: number; openPipeline: number };
   messages: { inbound: number; outbound: number };
   daily: { date: string; leads: number; appointments: number }[];
+  funnel: { stage: string; count: number }[];
+  funnelBySource: { source: string; leads: number; customers: number }[];
 }
 
 @Injectable()
@@ -51,12 +53,20 @@ export class ReportService {
         openAgg,
         inbound,
         outbound,
+        contactedCount,
+        bookedCount,
+        showedUpCount,
+        customerCount,
       ] = await Promise.all([
         tx.contact.count({ where: { createdAt: { gte: since } } }),
         tx.contact.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
         tx.contact.findMany({
           where: { createdAt: { gte: since } },
-          select: { createdAt: true, source: true },
+          select: {
+            createdAt: true,
+            source: true,
+            opportunities: { where: { status: "WON" }, select: { id: true }, take: 1 },
+          },
         }),
         tx.appointment.findMany({
           where: { createdAt: { gte: since } },
@@ -83,17 +93,61 @@ export class ReportService {
             occurredAt: { gte: since },
           },
         }),
+        // Funnel stages: each computed on leads created within the period, so
+        // the funnel always describes "what happened to this period's leads,"
+        // not a mix of old and new contacts. "Contacted" also counts anyone
+        // who got far enough to book or become a customer — reaching a later
+        // stage implies being reached, even for self-service bookings that
+        // never got an explicit outbound message. Keeps the funnel monotonic.
+        tx.contact.count({
+          where: {
+            createdAt: { gte: since },
+            OR: [
+              { messages: { some: { direction: "OUTBOUND", channel: { not: "NOTE" } } } },
+              { tags: { has: "followed-up" } },
+              { appointments: { some: {} } },
+              { opportunities: { some: { status: "WON" } } },
+            ],
+          },
+        }),
+        tx.contact.count({
+          where: { createdAt: { gte: since }, appointments: { some: {} } },
+        }),
+        tx.contact.count({
+          where: {
+            createdAt: { gte: since },
+            appointments: { some: { status: "COMPLETED" } },
+          },
+        }),
+        tx.contact.count({
+          where: {
+            createdAt: { gte: since },
+            opportunities: { some: { status: "WON" } },
+          },
+        }),
       ]);
 
       const bySourceMap = new Map<string, number>();
+      const bySourceCustomers = new Map<string, number>();
       for (const r of leadRows) {
         const key = r.source ?? "direct";
         bySourceMap.set(key, (bySourceMap.get(key) ?? 0) + 1);
+        if (r.opportunities.length > 0) {
+          bySourceCustomers.set(key, (bySourceCustomers.get(key) ?? 0) + 1);
+        }
       }
       const bySource = [...bySourceMap.entries()]
         .map(([source, count]) => ({ source, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
+      const funnelBySource = [...bySourceMap.entries()]
+        .map(([source, leads]) => ({
+          source,
+          leads,
+          customers: bySourceCustomers.get(source) ?? 0,
+        }))
+        .sort((a, b) => b.leads - a.leads)
+        .slice(0, 8);
 
       const completed = apptRows.filter((a) => a.status === "COMPLETED").length;
       const noShows = apptRows.filter((a) => a.status === "NO_SHOW").length;
@@ -132,6 +186,14 @@ export class ReportService {
         },
         messages: { inbound, outbound },
         daily,
+        funnel: [
+          { stage: "Leads", count: leadsNow },
+          { stage: "Contacted", count: contactedCount },
+          { stage: "Booked", count: bookedCount },
+          { stage: "Showed Up", count: showedUpCount },
+          { stage: "Customer", count: customerCount },
+        ],
+        funnelBySource,
       };
     });
   }

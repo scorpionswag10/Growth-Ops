@@ -33,6 +33,26 @@ export class UpsertContactDto {
 
   @IsOptional()
   @IsString()
+  utmSource?: string;
+
+  @IsOptional()
+  @IsString()
+  utmMedium?: string;
+
+  @IsOptional()
+  @IsString()
+  utmCampaign?: string;
+
+  @IsOptional()
+  @IsString()
+  utmContent?: string;
+
+  @IsOptional()
+  @IsString()
+  utmTerm?: string;
+
+  @IsOptional()
+  @IsString()
   timezone?: string;
 
   @IsOptional()
