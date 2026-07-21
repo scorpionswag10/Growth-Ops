@@ -17,6 +17,11 @@ const NAV = [
   { href: "/settings", label: "Settings" },
 ];
 
+// Admin-only nav items, matching how the Settings page itself already gates
+// its Team section — a platform-admin-only check on the frontend; the API
+// separately also permits location OWNER/ADMIN members.
+const ADMIN_NAV = [{ href: "/audit", label: "Audit Log" }];
+
 function Shell({ children }: { children: React.ReactNode }) {
   const { me, locations, location, setLocationId, reloadLocations, logout } =
     useWorkspace();
@@ -47,12 +52,15 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="text-base font-bold tracking-tight text-white">
             GrowthOps CRM
           </div>
-          <div className="mt-0.5 truncate text-xs text-slate-400">
+          <Link
+            href="/profile"
+            className="mt-0.5 block truncate text-xs text-slate-400 hover:text-slate-200 hover:underline"
+          >
             {me.email}
-          </div>
+          </Link>
         </div>
         <nav className="flex-1 space-y-1 px-3">
-          {NAV.map((item) => (
+          {[...NAV, ...(me.isPlatformAdmin ? ADMIN_NAV : [])].map((item) => (
             <Link
               key={item.href}
               href={item.href}

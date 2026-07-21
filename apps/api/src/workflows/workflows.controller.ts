@@ -9,7 +9,8 @@ import {
 } from "@nestjs/common";
 import { IsIn, IsUUID } from "class-validator";
 import { Location } from "@growthops/db";
-import { JwtAuthGuard } from "../auth/guards";
+import { CurrentUser, JwtAuthGuard } from "../auth/guards";
+import { JwtPayload } from "../auth/auth.service";
 import { CurrentLocation, TenancyGuard } from "../tenancy/tenancy.guard";
 import { WorkflowsService } from "./workflows.service";
 
@@ -39,17 +40,22 @@ export class WorkflowsController {
   }
 
   @Post("from-template/:key")
-  fromTemplate(@CurrentLocation() loc: Location, @Param("key") key: string) {
-    return this.workflows.createFromTemplate(loc.id, key);
+  fromTemplate(
+    @CurrentLocation() loc: Location,
+    @CurrentUser() user: JwtPayload,
+    @Param("key") key: string,
+  ) {
+    return this.workflows.createFromTemplate(loc.id, key, user.sub);
   }
 
   @Patch(":workflowId")
   setStatus(
     @CurrentLocation() loc: Location,
+    @CurrentUser() user: JwtPayload,
     @Param("workflowId") workflowId: string,
     @Body() dto: SetStatusDto,
   ) {
-    return this.workflows.setStatus(loc.id, workflowId, dto.status);
+    return this.workflows.setStatus(loc.id, workflowId, dto.status, user.sub);
   }
 
   @Get(":workflowId/executions")

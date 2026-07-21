@@ -7,6 +7,7 @@ import {
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../prisma/prisma.service";
 import { AuthService } from "../auth/auth.service";
+import { AuditService } from "../audit/audit.service";
 import { AcceptInviteDto, CreateInviteDto } from "./dto";
 
 const INVITE_TTL_DAYS = 7;
@@ -16,10 +17,11 @@ export class InvitesService {
   constructor(
     private prisma: PrismaService,
     private auth: AuthService,
+    private audit: AuditService,
   ) {}
 
-  create(locationId: string, invitedByUserId: string, dto: CreateInviteDto) {
-    return this.prisma.invite.create({
+  async create(locationId: string, invitedByUserId: string, dto: CreateInviteDto) {
+    const invite = await this.prisma.invite.create({
       data: {
         locationId,
         email: dto.email.toLowerCase(),
@@ -28,6 +30,11 @@ export class InvitesService {
         expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 86_400_000),
       },
     });
+    await this.audit.log(locationId, invitedByUserId, "Team", "invite_created", {
+      targetLabel: invite.email,
+      detail: `invited as ${invite.role}`,
+    });
+    return invite;
   }
 
   list(locationId: string) {
@@ -37,15 +44,19 @@ export class InvitesService {
     });
   }
 
-  async revoke(locationId: string, inviteId: string) {
+  async revoke(locationId: string, inviteId: string, actorId: string) {
     const invite = await this.prisma.invite.findUnique({ where: { id: inviteId } });
     if (!invite || invite.locationId !== locationId) {
       throw new NotFoundException("Invite not found");
     }
-    return this.prisma.invite.update({
+    const revoked = await this.prisma.invite.update({
       where: { id: inviteId },
       data: { status: "REVOKED" },
     });
+    await this.audit.log(locationId, actorId, "Team", "invite_revoked", {
+      targetLabel: invite.email,
+    });
+    return revoked;
   }
 
   /** Public preview — what the recipient sees before deciding to accept. */

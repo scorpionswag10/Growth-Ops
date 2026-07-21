@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Optional,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -11,7 +12,7 @@ import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
 import { AuthService, JwtPayload } from "./auth.service";
 import { CurrentUser, JwtAuthGuard } from "./guards";
-import { LoginDto, RefreshDto, RegisterDto } from "./dto";
+import { ChangePasswordDto, LoginDto, RefreshDto, RegisterDto, UpdateProfileDto } from "./dto";
 
 @Controller("auth")
 export class AuthController {
@@ -50,6 +51,24 @@ export class AuthController {
   @Get("me")
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: JwtPayload) {
-    return user;
+    return this.auth.getProfile(user.sub);
+  }
+
+  @Patch("me")
+  @UseGuards(JwtAuthGuard)
+  updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(user.sub, dto);
+  }
+
+  @Post("change-password")
+  @UseGuards(JwtAuthGuard)
+  changePassword(@CurrentUser() user: JwtPayload, @Body() dto: ChangePasswordDto) {
+    return this.auth.changePassword(user.sub, dto);
+  }
+
+  @Post("logout-all")
+  @UseGuards(JwtAuthGuard)
+  logoutAll(@CurrentUser() user: JwtPayload) {
+    return this.auth.logoutAll(user.sub);
   }
 }

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { CustomFieldDef, Prisma } from "@growthops/db";
 import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "../audit/audit.service";
 import { UpsertContactDto } from "./dto";
 
 /**
@@ -21,6 +22,7 @@ export class ContactsService {
   constructor(
     private prisma: PrismaService,
     private events: EventEmitter2,
+    private audit: AuditService,
   ) {}
 
   /**
@@ -170,10 +172,17 @@ export class ContactsService {
     });
   }
 
-  async remove(locationId: string, id: string) {
-    await this.prisma.withLocation(locationId, (tx) =>
+  async remove(locationId: string, id: string, actorId: string) {
+    const deleted = await this.prisma.withLocation(locationId, (tx) =>
       tx.contact.delete({ where: { id } }),
     );
+    const name = [deleted.firstName, deleted.lastName].filter(Boolean).join(" ")
+      || deleted.email
+      || deleted.phone
+      || id;
+    await this.audit.log(locationId, actorId, "Contacts", "contact_deleted", {
+      targetLabel: name,
+    });
     return { deleted: id };
   }
 

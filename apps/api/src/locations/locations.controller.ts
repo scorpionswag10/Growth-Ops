@@ -16,6 +16,7 @@ import { CurrentLocation, TenancyGuard } from "../tenancy/tenancy.guard";
 import { EntitlementsGuard, RequireFeature } from "../tenancy/entitlements.guard";
 import { Location } from "@growthops/db";
 import { CostEventsService } from "../cost-events/cost-events.service";
+import { AuditService } from "../audit/audit.service";
 
 class CreateLocationDto {
   @IsString()
@@ -41,6 +42,7 @@ export class LocationsController {
   constructor(
     private prisma: PrismaService,
     private costEvents: CostEventsService,
+    private audit: AuditService,
   ) {}
 
   @Post()
@@ -107,14 +109,20 @@ export class LocationsController {
     const location = await this.prisma.location.findUnique({
       where: { id: locationId },
     });
-    const merged = {
-      ...((location?.features ?? {}) as Record<string, boolean>),
-      ...body,
-    };
-    return this.prisma.location.update({
+    const before = (location?.features ?? {}) as Record<string, boolean>;
+    const merged = { ...before, ...body };
+    const updated = await this.prisma.location.update({
       where: { id: locationId },
       data: { features: merged },
     });
+    for (const [key, value] of Object.entries(body)) {
+      if (before[key] === value) continue;
+      await this.audit.log(locationId, user.sub, "Settings", "feature_toggled", {
+        targetLabel: key,
+        detail: value ? "turned on" : "turned off",
+      });
+    }
+    return updated;
   }
 
   @Patch(":locationId/ai-profile")

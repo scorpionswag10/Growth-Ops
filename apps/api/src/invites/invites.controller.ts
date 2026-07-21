@@ -61,7 +61,7 @@ export class InvitesController {
     @Param("inviteId") inviteId: string,
   ) {
     assertCanManageTeam(user, role);
-    return this.invites.revoke(loc.id, inviteId);
+    return this.invites.revoke(loc.id, inviteId, user.sub);
   }
 }
 

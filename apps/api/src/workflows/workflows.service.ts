@@ -3,6 +3,7 @@ import { OnEvent } from "@nestjs/event-emitter";
 import { Prisma, WorkflowTrigger } from "@growthops/db";
 import { PrismaService } from "../prisma/prisma.service";
 import { EngineService } from "./engine.service";
+import { AuditService } from "../audit/audit.service";
 import { TEMPLATE_CATALOG, WorkflowStep } from "./templates";
 
 export interface TriggerEvent {
@@ -18,6 +19,7 @@ export class WorkflowsService {
   constructor(
     private prisma: PrismaService,
     private engine: EngineService,
+    private audit: AuditService,
   ) {}
 
   catalog() {
@@ -29,10 +31,10 @@ export class WorkflowsService {
     }));
   }
 
-  createFromTemplate(locationId: string, key: string) {
+  async createFromTemplate(locationId: string, key: string, actorId: string) {
     const tpl = TEMPLATE_CATALOG.find((t) => t.key === key);
     if (!tpl) throw new NotFoundException("Unknown template");
-    return this.prisma.withLocation(locationId, (tx) =>
+    const workflow = await this.prisma.withLocation(locationId, (tx) =>
       tx.workflow.create({
         data: {
           locationId,
@@ -44,6 +46,10 @@ export class WorkflowsService {
         },
       }),
     );
+    await this.audit.log(locationId, actorId, "Automations", "workflow_installed", {
+      targetLabel: tpl.name,
+    });
+    return workflow;
   }
 
   list(locationId: string) {
@@ -57,10 +63,23 @@ export class WorkflowsService {
     );
   }
 
-  setStatus(locationId: string, workflowId: string, status: "ACTIVE" | "PAUSED") {
-    return this.prisma.withLocation(locationId, (tx) =>
+  async setStatus(
+    locationId: string,
+    workflowId: string,
+    status: "ACTIVE" | "PAUSED",
+    actorId: string,
+  ) {
+    const workflow = await this.prisma.withLocation(locationId, (tx) =>
       tx.workflow.update({ where: { id: workflowId }, data: { status } }),
     );
+    await this.audit.log(
+      locationId,
+      actorId,
+      "Automations",
+      status === "ACTIVE" ? "workflow_resumed" : "workflow_paused",
+      { targetLabel: workflow.name },
+    );
+    return workflow;
   }
 
   executions(locationId: string, workflowId: string) {

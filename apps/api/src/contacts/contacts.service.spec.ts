@@ -42,7 +42,8 @@ function makeService() {
     withLocation: jest.fn((_locationId: string, fn: (tx: unknown) => unknown) => fn(tx)),
   };
   const events = { emit: jest.fn() };
-  const service = new ContactsService(prisma as never, events as never);
+  const audit = { log: jest.fn() };
+  const service = new ContactsService(prisma as never, events as never, audit as never);
   return { service, tx, prisma, events };
 }
 

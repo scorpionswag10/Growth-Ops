@@ -15,6 +15,7 @@ model User {
   email           String       @unique
   passwordHash    String
   name            String
+  phone           String?
   isPlatformAdmin Boolean      @default(false)
   memberships     Membership[]
   refreshTokens   RefreshToken[]
@@ -61,6 +62,27 @@ model Invite {
 
   @@index([locationId, status])
   @@map("invites")
+}
+
+// A record of an admin-level action taken on this location: who did what,
+// to what, and when. Populated by explicit calls from the services that own
+// each action (invites, feature flags, workflows, contacts) — not a generic
+// request log, so every row is something a location admin would actually
+// want to see "who did this" for.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String   @db.Uuid
+  actorId    String?  @db.Uuid // null for system-initiated actions
+  actorLabel String            // denormalized display name/email at the time of the action
+  module     String            // "Team", "Settings", "Automations", "Contacts", ...
+  action     String            // "invite_created", "feature_toggled", ...
+  targetLabel String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  @@index([locationId, createdAt])
+  @@map("audit_logs")
 }
 
 enum InviteStatus {
@@ -116,6 +138,7 @@ model Location {
   workflows       Workflow[]
   workflowExecutions WorkflowExecution[]
   socialPosts     SocialPost[]
+  auditLogs       AuditLog[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 

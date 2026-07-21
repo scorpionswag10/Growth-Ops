@@ -10,3 +10,4 @@ infra/.pgdata/
 infra/redis-src/
 infra/.redisdata/
 apps/web/.next/
+*.tsbuildinfo

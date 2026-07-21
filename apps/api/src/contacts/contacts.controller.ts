@@ -10,7 +10,8 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { Location } from "@growthops/db";
-import { JwtAuthGuard } from "../auth/guards";
+import { CurrentUser, JwtAuthGuard } from "../auth/guards";
+import { JwtPayload } from "../auth/auth.service";
 import { CurrentLocation, TenancyGuard } from "../tenancy/tenancy.guard";
 import { ContactsService } from "./contacts.service";
 import { TagsDto, UpsertContactDto } from "./dto";
@@ -64,8 +65,12 @@ export class ContactsController {
   }
 
   @Delete(":id")
-  remove(@CurrentLocation() loc: Location, @Param("id") id: string) {
-    return this.contacts.remove(loc.id, id);
+  remove(
+    @CurrentLocation() loc: Location,
+    @CurrentUser() user: JwtPayload,
+    @Param("id") id: string,
+  ) {
+    return this.contacts.remove(loc.id, id, user.sub);
   }
 
   @Post(":id/tags")
