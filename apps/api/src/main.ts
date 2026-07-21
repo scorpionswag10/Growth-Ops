@@ -7,6 +7,8 @@ import { AppModule } from "./app.module";
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(helmet());
+  // Dev CORS for the web app; lock to the real web origin at deploy time.
+  app.enableCors({ origin: true, credentials: false });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
