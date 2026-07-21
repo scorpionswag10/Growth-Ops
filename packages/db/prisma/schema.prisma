@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ── Platform layer (not tenant-scoped) ──────────────────────────────
+
+model User {
+  id              String       @id @default(uuid()) @db.Uuid
+  email           String       @unique
+  passwordHash    String
+  name            String
+  isPlatformAdmin Boolean      @default(false)
+  memberships     Membership[]
+  refreshTokens   RefreshToken[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String    @db.Uuid
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// A Location is one client business (tenant). Every tenant-scoped table
+// carries locationId and gets an RLS policy in prisma/rls.sql.
+model Location {
+  id          String         @id @default(uuid()) @db.Uuid
+  name        String
+  timezone    String         @default("America/New_York")
+  status      LocationStatus @default(ACTIVE)
+  // Entitlement flags: features exist in code but are OFF per tenant until
+  // GrowthOps is ready to offer them (e.g. sms stays false until A2P 10DLC
+  // registration for this tenant is approved).
+  features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false}")
+  memberships Membership[]
+  costEvents  CostEvent[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("locations")
+}
+
+enum LocationStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model Membership {
+  id         String     @id @default(uuid()) @db.Uuid
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String     @db.Uuid
+  location   Location   @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId String     @db.Uuid
+  role       MemberRole @default(STAFF)
+  createdAt  DateTime   @default(now())
+
+  @@unique([userId, locationId])
+  @@map("memberships")
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+// ── Tenant layer (RLS-protected) ────────────────────────────────────
+
+// Internal provider-cost ledger. Not client billing — GrowthOps clients pay a
+// flat retainer — but every provider action logs its cost here from day one
+// so margins are visible and metering never has to be retrofitted.
+model CostEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId  String   @db.Uuid
+  type        CostType
+  provider    String
+  providerRef String?
+  quantity    Decimal  @default(1) @db.Decimal(12, 4)
+  unitCost    Decimal  @default(0) @db.Decimal(12, 6)
+  totalCost   Decimal  @default(0) @db.Decimal(12, 6)
+  meta        Json?
+  occurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([provider, providerRef, type])
+  @@index([locationId, occurredAt])
+  @@map("cost_events")
+}
+
+enum CostType {
+  SMS_OUT
+  SMS_IN
+  MMS_OUT
+  VOICE_MIN
+  EMAIL_SENT
+  AI_TOKENS
+  NUMBER_RENTAL
+  SOCIAL_POST
+  OTHER
+}

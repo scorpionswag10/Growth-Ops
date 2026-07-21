@@ -1,0 +1,21 @@
+{
+  "name": "growthops-crm",
+  "private": true,
+  "version": "0.1.0",
+  "description": "GrowthOps CRM — multi-tenant growth platform for appointment-based local businesses",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm --filter @growthops/api dev",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "pg:start": "infra/pg16/bin/pg_ctl -D infra/.pgdata -o \"-p 5433 -c listen_addresses=localhost\" -l infra/.pgdata/server.log start",
+    "pg:stop": "infra/pg16/bin/pg_ctl -D infra/.pgdata stop",
+    "db:push": "pnpm --filter @growthops/db db:push",
+    "db:rls": "pnpm --filter @growthops/db db:rls",
+    "db:generate": "pnpm --filter @growthops/db generate"
+  }
+}

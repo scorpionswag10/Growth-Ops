@@ -1,0 +1,20 @@
+{
+  "name": "@growthops/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:rls": "prisma db execute --url \"$DIRECT_DATABASE_URL\" --file prisma/rls.sql"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.10.0",
+    "typescript": "^5.7.0"
+  }
+}
