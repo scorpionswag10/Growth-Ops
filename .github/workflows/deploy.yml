@@ -1,0 +1,36 @@
+name: Deploy to Cloudflare
+
+# Runs on a GitHub-hosted Linux runner specifically because Docker doesn't
+# run locally on the dev machine this project is built on (old macOS) —
+# wrangler builds the Cloudflare Container image using a real Docker
+# daemon, which ubuntu-latest has natively.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Deploy API (Container) + web (Worker)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler deploy
+          pnpm --filter @growthops/web run cf:deploy
