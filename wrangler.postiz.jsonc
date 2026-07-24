@@ -1,0 +1,22 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "postiz",
+	"main": "postiz-worker/index.ts",
+	"compatibility_date": "2026-07-22",
+	"compatibility_flags": ["nodejs_compat"],
+	"containers": [
+		{
+			// Public pre-built image, no Dockerfile of ours needed.
+			"image": "ghcr.io/gitroomhq/postiz-app:latest",
+			"class_name": "PostizContainer",
+			"max_instances": 2,
+			"instance_type": "standard-1"
+		}
+	],
+	"durable_objects": {
+		"bindings": [{ "name": "POSTIZ_CONTAINER", "class_name": "PostizContainer" }]
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["PostizContainer"] }]
+	// No Hyperdrive — same lesson as growthops-api: Hyperdrive doesn't work
+	// inside Containers, connect straight to Neon via a plain secret.
+}
