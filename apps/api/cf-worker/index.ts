@@ -23,6 +23,13 @@ export class ApiContainer extends Container<Env> {
     // shape but hasn't been verified against real Hyperdrive docs yet;
     // confirm this once Neon + Hyperdrive actually exist.
     this.envVars = {
+      // Explicit, not just relying on the Dockerfile's own ENV PORT=8080 —
+      // unclear from docs whether envVars merges with or replaces the
+      // image's own environment, and a mismatch here is exactly what
+      // produces "Failed to start container: internal error connecting
+      // to the port" (confirmed as the real failure, not guessed).
+      PORT: "8080",
+      NODE_ENV: "production",
       DATABASE_URL: env.HYPERDRIVE?.connectionString ?? "",
       REDIS_URL: env.REDIS_URL ?? "",
       JWT_SECRET: env.JWT_SECRET ?? "",
