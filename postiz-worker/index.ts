@@ -28,6 +28,11 @@ export class PostizContainer extends Container<Env> {
       CLOUDFLARE_BUCKETNAME: "postiz-media",
       CLOUDFLARE_BUCKET_URL: env.CLOUDFLARE_BUCKET_URL ?? "",
       CLOUDFLARE_REGION: "auto",
+      // Cloudflare's Worker sits in front as a proxy layer, same shape as
+      // the Caddy/Cloudflare "hairpin" issue documented in Postiz's own
+      // self-hosting community — without this, the backend can reject
+      // requests over unrecognized proxy headers.
+      TRUST_PROXY: "true",
     };
   }
 
