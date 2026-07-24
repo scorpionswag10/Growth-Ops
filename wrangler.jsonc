@@ -8,14 +8,14 @@
 	],
 	"containers": [
 		{
-			"image": "./Dockerfile.api",
+			// TEMPORARY diagnostic swap — testing whether a trivial public
+			// image schedules successfully, to isolate whether the
+			// "container not running" failure is specific to our own
+			// image/app or a platform-wide scheduling bug. Revert to
+			// "./Dockerfile.api" once this test is done.
+			"image": "docker.io/library/nginx:alpine",
 			"class_name": "ApiContainer",
 			"max_instances": 2,
-			// Default is "lite" (256MiB RAM, 0.0625 vCPU) — confirmed via
-			// `wrangler containers info` that the app was OOM-crashing on
-			// boot before ever binding to the port ("healthy" sandbox, but
-			// 0 active instances). A real NestJS app (Prisma, BullMQ,
-			// Passport, etc.) needs real headroom.
 			"instance_type": "standard-1"
 		}
 	],
