@@ -10,7 +10,13 @@
 		{
 			"image": "./Dockerfile.api",
 			"class_name": "ApiContainer",
-			"max_instances": 2
+			"max_instances": 2,
+			// Default is "lite" (256MiB RAM, 0.0625 vCPU) — confirmed via
+			// `wrangler containers info` that the app was OOM-crashing on
+			// boot before ever binding to the port ("healthy" sandbox, but
+			// 0 active instances). A real NestJS app (Prisma, BullMQ,
+			// Passport, etc.) needs real headroom.
+			"instance_type": "standard-1"
 		}
 	],
 	"durable_objects": {
@@ -38,9 +44,7 @@
 			"id": "2f4f569f05d94ab695acd31419780fe5"
 		}
 	]
-	// Secrets (JWT_SECRET, REDIS_URL, ANTHROPIC_API_KEY, VAPID keys, etc.)
-	// still need a verified path from `wrangler secret put` into the running
-	// container instance — the fetched Container example only showed a
-	// static, hardcoded `envVars` literal, not dynamic secret injection.
-	// Confirm the real mechanism before deploying anything with real secrets.
+	// Secrets confirmed working 2026-07-24: set via `wrangler secret put`,
+	// forwarded into the container via the Container subclass constructor
+	// reading `env` and setting `this.envVars` (apps/api/cf-worker/index.ts).
 }
