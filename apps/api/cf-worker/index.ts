@@ -40,8 +40,14 @@ export class ApiContainer extends Container<Env> {
       DATABASE_URL: env.NEON_DATABASE_URL ?? "",
       REDIS_URL: env.REDIS_URL ?? "",
       JWT_SECRET: env.JWT_SECRET ?? "",
-      JWT_ACCESS_TTL_SECONDS: env.JWT_ACCESS_TTL_SECONDS ?? "",
-      REFRESH_TTL_DAYS: env.REFRESH_TTL_DAYS ?? "",
+      // Plain numeric TTLs, not secrets — hardcoded real defaults here
+      // rather than routed through an optional Cloudflare secret. An
+      // unset secret resolves to "" (not undefined), which defeats a
+      // downstream `?? 900`-style default in the app code (Number("")
+      // is 0, not NaN) — this bit us: tokens were expiring the instant
+      // they were issued (JWT exp === iat) until this was caught.
+      JWT_ACCESS_TTL_SECONDS: env.JWT_ACCESS_TTL_SECONDS ?? "900",
+      REFRESH_TTL_DAYS: env.REFRESH_TTL_DAYS ?? "30",
       AI_MODEL: env.AI_MODEL ?? "",
       ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY ?? "",
       PUSH_VAPID_PUBLIC_KEY: env.PUSH_VAPID_PUBLIC_KEY ?? "",
