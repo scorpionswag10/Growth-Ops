@@ -7,6 +7,12 @@
     "node": ">=22"
   },
   "packageManager": "pnpm@9.15.9",
+  "dependencies": {
+    "@cloudflare/containers": "^0.3.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260723.1"
+  },
   "scripts": {
     "build": "pnpm -r build",
     "dev": "pnpm --filter @growthops/api dev",

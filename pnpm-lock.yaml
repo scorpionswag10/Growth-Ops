@@ -6,7 +6,15 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    dependencies:
+      '@cloudflare/containers':
+        specifier: ^0.3.7
+        version: 0.3.7
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^5.20260723.1
+        version: 5.20260723.1
 
   apps/api:
     dependencies:
