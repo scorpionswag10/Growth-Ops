@@ -6,8 +6,12 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"containers": [
 		{
-			// Public pre-built image, no Dockerfile of ours needed.
-			"image": "ghcr.io/gitroomhq/postiz-app:latest",
+			// Cloudflare Containers can't pull directly from ghcr.io (only
+			// AWS ECR / DockerHub / Google Artifact Registry are supported
+			// external registries) — this one-line Dockerfile is a pure
+			// passthrough that lets our own build pull it and push the
+			// result to Cloudflare's own registry instead.
+			"image": "./Dockerfile.postiz",
 			"class_name": "PostizContainer",
 			"max_instances": 2,
 			"instance_type": "standard-1"

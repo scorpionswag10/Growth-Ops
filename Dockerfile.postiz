@@ -1,0 +1,8 @@
+# Cloudflare Containers only supports pulling directly from AWS ECR,
+# DockerHub, or Google Artifact Registry — ghcr.io isn't a supported
+# external registry (confirmed via `wrangler containers registries
+# configure ghcr.io` → "ghcr.io is not a supported image registry").
+# This one-line passthrough lets our own Docker build pull the public
+# Postiz image from ghcr.io, then Wrangler pushes the result to
+# Cloudflare's own registry — same mechanism as apps/api's own image.
+FROM ghcr.io/gitroomhq/postiz-app:latest
