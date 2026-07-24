@@ -14,7 +14,14 @@
 			"image": "./Dockerfile.postiz",
 			"class_name": "PostizContainer",
 			"max_instances": 2,
-			"instance_type": "standard-1"
+			// standard-1 (0.5 vCPU/4GiB) wasn't enough — nginx stayed up
+			// (satisfying Cloudflare's own health check) but its upstream
+			// (pm2-managed Next.js frontend + Node backend, alongside
+			// Redis) kept failing, producing a permanent 502 from nginx
+			// itself rather than the "container not running" wrapper
+			// error. Postiz bundles two Node processes plus Redis plus
+			// nginx, unlike the single-process API container.
+			"instance_type": "standard-3"
 		}
 	],
 	"durable_objects": {
