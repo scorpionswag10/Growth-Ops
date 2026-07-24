@@ -30,7 +30,14 @@ export class ApiContainer extends Container<Env> {
       // to the port" (confirmed as the real failure, not guessed).
       PORT: "8080",
       NODE_ENV: "production",
-      DATABASE_URL: env.HYPERDRIVE?.connectionString ?? "",
+      // Hyperdrive's connection string only works through the Workers
+      // runtime's own socket API (`connect()`) — it is NOT usable from a
+      // Container process, which is a real Linux VM making plain TCP
+      // connections. Confirmed via cloudflare/containers#97: Hyperdrive
+      // does not work inside Containers. A Container is already a
+      // persistent process (unlike a Worker), so it doesn't need
+      // Hyperdrive's pooling trick anyway — connect straight to Neon.
+      DATABASE_URL: env.NEON_DATABASE_URL ?? "",
       REDIS_URL: env.REDIS_URL ?? "",
       JWT_SECRET: env.JWT_SECRET ?? "",
       JWT_ACCESS_TTL_SECONDS: env.JWT_ACCESS_TTL_SECONDS ?? "",
@@ -68,6 +75,7 @@ export class ApiContainer extends Container<Env> {
 interface Env {
   API_CONTAINER: DurableObjectNamespace<ApiContainer>;
   HYPERDRIVE?: { connectionString: string };
+  NEON_DATABASE_URL?: string;
   REDIS_URL?: string;
   JWT_SECRET?: string;
   JWT_ACCESS_TTL_SECONDS?: string;
