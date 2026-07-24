@@ -2,7 +2,22 @@
 # DockerHub, or Google Artifact Registry — ghcr.io isn't a supported
 # external registry (confirmed via `wrangler containers registries
 # configure ghcr.io` → "ghcr.io is not a supported image registry").
-# This one-line passthrough lets our own Docker build pull the public
-# Postiz image from ghcr.io, then Wrangler pushes the result to
-# Cloudflare's own registry — same mechanism as apps/api's own image.
+# This lets our own Docker build pull the public Postiz image from
+# ghcr.io, then Wrangler pushes the result to Cloudflare's own
+# registry — same mechanism as apps/api's own image.
 FROM ghcr.io/gitroomhq/postiz-app:latest
+
+# Upstash's free tier only allows one database per account, and this
+# account's only free one is already used by GrowthOps CRM's own
+# BullMQ queue. Rather than a paid Upstash plan or a second account, run
+# Redis co-located inside this same container — genuinely free, and
+# fine for Postiz's use of Redis (cache/job-queue state, not its system
+# of record; Postgres is). Base image confirmed as node:22.20-bookworm-slim
+# via Postiz's real production Dockerfile (Dockerfile.dev in their repo),
+# so apt-get is available.
+RUN apt-get update && apt-get install -y --no-install-recommends redis-server \
+    && rm -rf /var/lib/apt/lists/*
+
+# Same startup sequence Postiz's own image uses (nginx && pnpm run pm2),
+# with Redis started first. No persistence flag needed — ephemeral is fine.
+CMD ["sh", "-c", "redis-server --daemonize yes && nginx && pnpm run pm2"]

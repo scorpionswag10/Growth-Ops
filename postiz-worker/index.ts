@@ -10,7 +10,11 @@ export class PostizContainer extends Container<Env> {
     super(ctx, env);
     this.envVars = {
       DATABASE_URL: env.POSTIZ_DATABASE_URL ?? "",
-      REDIS_URL: env.POSTIZ_REDIS_URL ?? "",
+      // Redis runs co-located inside this same container (see
+      // Dockerfile.postiz) — Upstash's free tier only allows one
+      // database per account, already used by GrowthOps CRM's own
+      // BullMQ queue.
+      REDIS_URL: "redis://localhost:6379",
       JWT_SECRET: env.JWT_SECRET ?? "",
       FRONTEND_URL: "https://postiz.scorpionswag10.workers.dev",
       NEXT_PUBLIC_BACKEND_URL: "https://postiz.scorpionswag10.workers.dev/api",
@@ -48,7 +52,6 @@ export class PostizContainer extends Container<Env> {
 interface Env {
   POSTIZ_CONTAINER: DurableObjectNamespace<PostizContainer>;
   POSTIZ_DATABASE_URL?: string;
-  POSTIZ_REDIS_URL?: string;
   JWT_SECRET?: string;
   CLOUDFLARE_ACCOUNT_ID?: string;
   CLOUDFLARE_ACCESS_KEY?: string;
