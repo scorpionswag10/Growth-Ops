@@ -8,14 +8,14 @@
 	],
 	"containers": [
 		{
-			// TEMPORARY diagnostic swap — testing whether a trivial public
-			// image schedules successfully, to isolate whether the
-			// "container not running" failure is specific to our own
-			// image/app or a platform-wide scheduling bug. Revert to
-			// "./Dockerfile.api" once this test is done.
-			"image": "docker.io/library/nginx:alpine",
+			"image": "./Dockerfile.api",
 			"class_name": "ApiContainer",
 			"max_instances": 2,
+			// Confirmed via `wrangler containers info` that even a trivial
+			// public image (nginx:alpine) fails to schedule on this
+			// account — this is a Cloudflare platform-side bug, not
+			// something caused by our image/app. See daily note / support
+			// ticket for tracking.
 			"instance_type": "standard-1"
 		}
 	],
