@@ -1,0 +1,46 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "growthops-api",
+	"main": "apps/api/cf-worker/index.ts",
+	"compatibility_date": "2026-07-22",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"containers": [
+		{
+			"image": "./Dockerfile.api",
+			"class_name": "ApiContainer",
+			"max_instances": 2
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "API_CONTAINER",
+				"class_name": "ApiContainer"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"ApiContainer"
+			]
+		}
+	],
+	// Real config, created 2026-07-24 via `wrangler hyperdrive create`
+	// against the live Neon Postgres instance — verified working, not a
+	// placeholder anymore.
+	"hyperdrive": [
+		{
+			"binding": "HYPERDRIVE",
+			"id": "2f4f569f05d94ab695acd31419780fe5"
+		}
+	]
+	// Secrets (JWT_SECRET, REDIS_URL, ANTHROPIC_API_KEY, VAPID keys, etc.)
+	// still need a verified path from `wrangler secret put` into the running
+	// container instance — the fetched Container example only showed a
+	// static, hardcoded `envVars` literal, not dynamic secret injection.
+	// Confirm the real mechanism before deploying anything with real secrets.
+}

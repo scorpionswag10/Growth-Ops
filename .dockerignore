@@ -1,0 +1,14 @@
+node_modules
+.git
+apps/web/.next
+apps/web/.open-next
+.wrangler
+infra/pg16
+infra/.pgdata
+infra/redis-src
+infra/.redisdata
+*.tsbuildinfo
+*.log
+.env
+.env.local
+.env.*.local

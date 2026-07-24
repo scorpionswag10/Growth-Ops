@@ -11,3 +11,6 @@ infra/redis-src/
 infra/.redisdata/
 apps/web/.next/
 *.tsbuildinfo
+apps/api/.deploy/
+.open-next/
+.wrangler/
