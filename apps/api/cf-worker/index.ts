@@ -84,7 +84,7 @@ export default {
     // Fixed name, not per-path — this is one persistent API+worker
     // process (matching how it already runs today), not a
     // per-resource-isolated container instance.
-    const container = getContainer(env.API_CONTAINER, "primary-v2");
+    const container = getContainer(env.API_CONTAINER, "primary");
     return container.fetch(request);
   },
 };
