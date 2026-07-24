@@ -31,6 +31,11 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Next.js inlines NEXT_PUBLIC_* vars into the client bundle at
+          # build time — without these here, the deployed site silently
+          # falls back to localhost:3000 for every API call.
+          NEXT_PUBLIC_API_URL: https://growthops-api.scorpionswag10.workers.dev
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY: BCiVMlXadMuDekKkGpulHx29AxB1wRVuptu6TF2DIzOIMO792-Dpj7gXuxjKb-LmA8B2eF1t44RAa6hhSapsyI8
         run: |
           npx wrangler deploy
           pnpm --filter @growthops/web run cf:deploy
