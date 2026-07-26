@@ -98,7 +98,13 @@ export default {
     // Fixed name, not per-path — this is one persistent API+worker
     // process (matching how it already runs today), not a
     // per-resource-isolated container instance.
-    const container = getContainer(env.API_CONTAINER, "primary");
+    // Renamed from "primary" 2026-07-26 to force a brand-new Durable
+    // Object instance: the existing "primary" DO's JS object (and its
+    // envVars, captured once at construction) survives container-level
+    // rollouts/recycles indefinitely — swapping the lookup name is the
+    // only way to guarantee the constructor re-runs and picks up
+    // current secrets (matches the RLS-role fix landing here).
+    const container = getContainer(env.API_CONTAINER, "primary-v2");
     return container.fetch(request);
   },
 };
