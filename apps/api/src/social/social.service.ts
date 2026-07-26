@@ -10,6 +10,7 @@ import { Job, Queue, Worker } from "bullmq";
 import IORedis from "ioredis";
 import { SocialPost } from "@growthops/db";
 import { PrismaService } from "../prisma/prisma.service";
+import { PostizPublisherService } from "./postiz-publisher.service";
 
 const QUEUE = "social-posts";
 export const PLATFORMS = ["facebook", "instagram", "gbp", "tiktok"] as const;
@@ -36,7 +37,10 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
   private worker!: Worker<PublishJob>;
   private publisher: SocialPublisher | null = null;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private postizPublisher: PostizPublisherService,
+  ) {}
 
   registerPublisher(publisher: SocialPublisher) {
     this.publisher = publisher;
@@ -53,6 +57,13 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
       (job) => this.publish(job),
       { connection: connection.duplicate(), concurrency: 3 },
     );
+    if (this.postizPublisher.isConfigured()) {
+      this.registerPublisher(this.postizPublisher);
+    } else {
+      this.log.warn(
+        "POSTIZ_API_URL/POSTIZ_API_KEY not set — social publishing is inert",
+      );
+    }
   }
 
   async onModuleDestroy() {
@@ -150,6 +161,38 @@ export class SocialService implements OnModuleInit, OnModuleDestroy {
       tx.socialPost.delete({ where: { id: postId } }),
     );
     return { deleted: postId };
+  }
+
+  listIntegrations(locationId: string) {
+    return this.prisma.withLocation(locationId, (tx) =>
+      tx.socialIntegration.findMany({ orderBy: { platform: "asc" } }),
+    );
+  }
+
+  setIntegration(
+    locationId: string,
+    platform: string,
+    postizIntegrationId: string,
+  ) {
+    if (!PLATFORMS.includes(platform as (typeof PLATFORMS)[number])) {
+      throw new BadRequestException(`Unknown platform: ${platform}`);
+    }
+    return this.prisma.withLocation(locationId, (tx) =>
+      tx.socialIntegration.upsert({
+        where: { locationId_platform: { locationId, platform } },
+        create: { locationId, platform, postizIntegrationId },
+        update: { postizIntegrationId },
+      }),
+    );
+  }
+
+  async removeIntegration(locationId: string, platform: string) {
+    await this.prisma.withLocation(locationId, (tx) =>
+      tx.socialIntegration.delete({
+        where: { locationId_platform: { locationId, platform } },
+      }),
+    );
+    return { deleted: platform };
   }
 
   private async enqueue(postId: string, locationId: string, at: Date) {

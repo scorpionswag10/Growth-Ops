@@ -1,10 +1,11 @@
 import { Module } from "@nestjs/common";
-import { SocialController } from "./social.controller";
+import { SocialController, SocialIntegrationsController } from "./social.controller";
 import { SocialService } from "./social.service";
+import { PostizPublisherService } from "./postiz-publisher.service";
 
 @Module({
-  controllers: [SocialController],
-  providers: [SocialService],
+  controllers: [SocialController, SocialIntegrationsController],
+  providers: [SocialService, PostizPublisherService],
   exports: [SocialService],
 })
 export class SocialModule {}

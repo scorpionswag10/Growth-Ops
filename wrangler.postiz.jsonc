@@ -27,7 +27,17 @@
 	"durable_objects": {
 		"bindings": [{ "name": "POSTIZ_CONTAINER", "class_name": "PostizContainer" }]
 	},
-	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["PostizContainer"] }]
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["PostizContainer"] }],
 	// No Hyperdrive — same lesson as growthops-api: Hyperdrive doesn't work
 	// inside Containers, connect straight to Neon via a plain secret.
+	// Off by default — without this, container stdout/exceptions never reach
+	// wrangler tail or the dashboard's Logs view, which is why the backend
+	// 502 investigation on 2026-07-25 couldn't see any actual error detail.
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
+		}
+	}
 }

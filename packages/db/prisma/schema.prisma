@@ -138,6 +138,7 @@ model Location {
   workflows       Workflow[]
   workflowExecutions WorkflowExecution[]
   socialPosts     SocialPost[]
+  socialIntegrations SocialIntegration[]
   auditLogs       AuditLog[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -532,6 +533,22 @@ enum SocialPostStatus {
   SCHEDULED
   PUBLISHED
   FAILED
+}
+
+// Maps a tenant's connected social account (connected one-time through
+// Postiz's own dashboard) to the Postiz integration id PostizPublisher needs
+// to target when publishing. One row per location+platform.
+model SocialIntegration {
+  id                  String   @id @default(uuid()) @db.Uuid
+  location            Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId          String   @db.Uuid
+  platform            String // facebook | instagram | gbp | tiktok
+  postizIntegrationId String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([locationId, platform])
+  @@map("social_integrations")
 }
 
 enum CostType {

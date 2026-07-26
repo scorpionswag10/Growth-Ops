@@ -27,6 +27,7 @@ BEGIN
     'workflows',
     'workflow_executions',
     'social_posts',
+    'social_integrations',
     'audit_logs'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);

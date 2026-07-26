@@ -58,6 +58,16 @@ class UpdatePostDto {
   cancel?: boolean;
 }
 
+class SetIntegrationDto {
+  @IsString()
+  @MinLength(1)
+  platform!: string;
+
+  @IsString()
+  @MinLength(1)
+  postizIntegrationId!: string;
+}
+
 @Controller("locations/:locationId/social-posts")
 @UseGuards(JwtAuthGuard, TenancyGuard, EntitlementsGuard)
 @RequireFeature("social")
@@ -86,5 +96,34 @@ export class SocialController {
   @Delete(":postId")
   remove(@CurrentLocation() loc: Location, @Param("postId") postId: string) {
     return this.social.remove(loc.id, postId);
+  }
+}
+
+@Controller("locations/:locationId/social-integrations")
+@UseGuards(JwtAuthGuard, TenancyGuard, EntitlementsGuard)
+@RequireFeature("social")
+export class SocialIntegrationsController {
+  constructor(private social: SocialService) {}
+
+  @Get()
+  list(@CurrentLocation() loc: Location) {
+    return this.social.listIntegrations(loc.id);
+  }
+
+  @Post()
+  set(@CurrentLocation() loc: Location, @Body() dto: SetIntegrationDto) {
+    return this.social.setIntegration(
+      loc.id,
+      dto.platform,
+      dto.postizIntegrationId,
+    );
+  }
+
+  @Delete(":platform")
+  remove(
+    @CurrentLocation() loc: Location,
+    @Param("platform") platform: string,
+  ) {
+    return this.social.removeIntegration(loc.id, platform);
   }
 }

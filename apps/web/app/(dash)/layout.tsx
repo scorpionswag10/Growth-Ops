@@ -28,6 +28,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [newLocName, setNewLocName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   async function createLocation(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +41,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       await reloadLocations();
       setLocationId(loc.id);
       setNewLocName("");
+      setShowCreateModal(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed");
     }
@@ -88,6 +90,18 @@ function Shell({ children }: { children: React.ReactNode }) {
               ))}
             </select>
           )}
+          {locations.length > 0 && me.isPlatformAdmin && (
+            <button
+              onClick={() => {
+                setError(null);
+                setNewLocName("");
+                setShowCreateModal(true);
+              }}
+              className="w-full rounded-lg border border-slate-700 px-3 py-1.5 text-left text-xs text-slate-300 hover:bg-slate-800"
+            >
+              + New client
+            </button>
+          )}
           <button
             onClick={logout}
             className="w-full rounded-lg px-3 py-1.5 text-left text-xs text-slate-400 hover:bg-slate-800"
@@ -130,6 +144,44 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </main>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <form
+            onSubmit={createLocation}
+            className="w-full max-w-sm rounded-xl bg-white p-6 shadow"
+          >
+            <h2 className="text-sm font-semibold text-slate-900">
+              Add a new client
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              A location is one client business. Everything — contacts,
+              conversations, pipelines — lives inside it.
+            </p>
+            <input
+              autoFocus
+              className="mt-4 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+              placeholder="Business name"
+              value={newLocName}
+              onChange={(e) => setNewLocName(e.target.value)}
+              required
+            />
+            {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button className="flex-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                Create
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
