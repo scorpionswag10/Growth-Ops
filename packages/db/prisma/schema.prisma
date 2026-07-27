@@ -114,7 +114,7 @@ model Location {
   // Entitlement flags: features exist in code but are OFF per tenant until
   // GrowthOps is ready to offer them (e.g. sms stays false until A2P 10DLC
   // registration for this tenant is approved).
-  features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false, \"ai\": false, \"seo\": false}")
+  features    Json           @default("{\"sms\": false, \"email\": false, \"booking\": false, \"social\": false, \"workflows\": false, \"ai\": false}")
   // Business knowledge for the AI receptionist: services, prices, hours,
   // policies, FAQs — written per client, injected into the system prompt.
   aiProfile   String?
@@ -139,7 +139,6 @@ model Location {
   workflowExecutions WorkflowExecution[]
   socialPosts     SocialPost[]
   socialIntegrations SocialIntegration[]
-  seoAudits SeoAudit[]
   auditLogs       AuditLog[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -550,27 +549,6 @@ model SocialIntegration {
 
   @@unique([locationId, platform])
   @@map("social_integrations")
-}
-
-// One row per audit run. `result` holds the vendored seo-audit.sh script's
-// full --json output (robots_txt, llms_txt, on_page, schema, local_seo,
-// performance, insights, google_business_profile, findings[], ...) —
-// stored whole rather than modeled relationally since the shape is rich
-// and mostly display-only. `score` is a quick denormalized summary for
-// list views, computed the same way as the report's own documented
-// methodology (rated sections start at 100, subtract by finding severity,
-// average across rated sections).
-model SeoAudit {
-  id         String   @id @default(uuid()) @db.Uuid
-  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  locationId String   @db.Uuid
-  url        String
-  score      Int
-  result     Json
-  createdAt  DateTime @default(now())
-
-  @@index([locationId, createdAt])
-  @@map("seo_audits")
 }
 
 enum CostType {
