@@ -14,6 +14,7 @@ const FEATURES: { key: string; label: string; note: string }[] = [
   { key: "social", label: "Social publishing", note: "Arrives with the social media module" },
   { key: "workflows", label: "Automations", note: "Arrives with the workflow engine" },
   { key: "ai", label: "AI receptionist", note: "Auto-replies to inbound messages and books appointments; needs an Anthropic API key on the server" },
+  { key: "seo", label: "SEO / AEO audit", note: "Live site audits — AI crawler access, llms.txt, schema, on-page SEO" },
 ];
 
 type Invite = {
