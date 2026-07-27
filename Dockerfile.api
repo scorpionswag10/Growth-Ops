@@ -42,6 +42,11 @@ RUN pnpm --filter @growthops/api build
 
 FROM node:22-slim AS runtime
 WORKDIR /repo
+# curl + python3: real runtime deps of apps/api/vendor/seo-audit.sh, which
+# the SEO audit feature shells out to (see seo/seo.service.ts) — not build
+# tooling, so they belong in the runtime stage, not just `base`.
+RUN apt-get update && apt-get install -y --no-install-recommends curl python3 \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /repo ./
 ENV NODE_ENV=production
 ENV PORT=8080
