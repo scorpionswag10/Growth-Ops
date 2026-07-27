@@ -17,6 +17,7 @@ import { AiModule } from "./ai/ai.module";
 import { InvitesModule } from "./invites/invites.module";
 import { PushModule } from "./push/push.module";
 import { AuditModule } from "./audit/audit.module";
+import { SeoModule } from "./seo/seo.module";
 import { HealthController } from "./health/health.controller";
 
 @Module({
@@ -39,6 +40,7 @@ import { HealthController } from "./health/health.controller";
     InvitesModule,
     PushModule,
     AuditModule,
+    SeoModule,
   ],
   controllers: [HealthController],
 })

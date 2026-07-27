@@ -13,6 +13,7 @@ const NAV = [
   { href: "/calendar", label: "Calendar" },
   { href: "/workflows", label: "Automations" },
   { href: "/social", label: "Social" },
+  { href: "/seo", label: "SEO" },
   { href: "/reports", label: "Reports" },
   { href: "/settings", label: "Settings" },
 ];
