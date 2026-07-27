@@ -1,5 +1,13 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // Pin explicitly rather than rely on Prisma's own OpenSSL auto-detection
+  // at build time, which silently defaulted to "openssl-1.1.x" (logged as
+  // a build warning, easy to miss) — installing anything that pulls in
+  // libssl3 as a dependency (e.g. curl) changes what the *runtime*
+  // container reports, so it looks for a "debian-openssl-3.0.x" engine
+  // that was never bundled and crashes before binding a port. Bundling
+  // both makes this deterministic regardless of what else gets installed.
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
